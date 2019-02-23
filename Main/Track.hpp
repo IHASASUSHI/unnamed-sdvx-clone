@@ -83,11 +83,9 @@ public:
 
 	/* Track base graphics */
 	Mesh trackMesh;
-	Mesh trackDarkMesh;
 	Mesh trackTickMesh;
 	Material trackMaterial; // Also used for buttons
 	Texture trackTexture;
-	Texture trackDarkTexture;
 	Texture trackTickTexture;
 
 	/* Object graphics */
@@ -109,9 +107,7 @@ public:
 	Material trackOverlay;
 
 	/* Scoring and feedback elements */
-	Texture scoreBarTexture;
 	Texture scoreHitTexture;
-	Texture laserPointerTexture;
 	Texture scoreHitTextures[3]; // Ok, Miss, Perfect
 	// Combo counter sprite sheet
 	Mesh comboSpriteMeshes[10];
@@ -159,7 +155,7 @@ private:
 	// How much the track is hidden. 1.0 = fully hidden, 0.0 = fully visible
 	float m_trackHide = 0.0f;
 	float m_trackHideSpeed = 0.0f;
-}; 
+};
 
 // Base class for sprite effects on the track
 struct TimedEffect

@@ -36,6 +36,7 @@
 #include <Graphics/MeshGenerators.hpp>
 #include <Graphics/Font.hpp>
 #include <Graphics/Framebuffer.hpp>
+#include <Graphics/TextureAnimator.hpp>
 using namespace Graphics;
 
 // Asset loading macro

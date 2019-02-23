@@ -25,6 +25,29 @@ struct AsyncTextureLoadOperation : public AsyncLoadOperation
 		return target.IsValid();
 	}
 };
+//I have no idea what to call this thing nor do I know what exactly its returning a boolean for
+struct AsyncTexturesLoadOperation : public AsyncLoadOperation
+{
+	Vector<Texture>& target;
+	Vector<Image> images;
+	AsyncTexturesLoadOperation(Vector<Texture>& target, const String& path) : target(target)
+	{
+		name = path;
+	}
+	bool AsyncLoad()
+	{
+		images = g_application->LoadImages(name);
+		return images[0].IsValid();
+	}
+	bool AsyncFinalize()
+	{
+		for (int i = 0 ; i < images.size() ; i++)
+		{
+			target.push_back(TextureRes::Create(g_gl, images[i]));
+		}
+		return target[0].IsValid();
+	}
+};
 struct AsyncMeshLoadOperation : public AsyncLoadOperation
 {
 	Mesh& target;
@@ -100,6 +123,10 @@ AsyncAssetLoader::~AsyncAssetLoader()
 void AsyncAssetLoader::AddTexture(Texture& out, const String& path)
 {
 	m_impl->loadables.Add(new AsyncTextureLoadOperation(out, path));
+}
+void AsyncAssetLoader::AddTextures(Vector<Texture>& out, const String& path)
+{
+	m_impl->loadables.Add(new AsyncTexturesLoadOperation(out, path));
 }
 void AsyncAssetLoader::AddMesh(Mesh& out, const String& path)
 {

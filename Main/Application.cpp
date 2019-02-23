@@ -20,6 +20,7 @@
 #include "discord_rpc.h"
 #include "cpr/cpr.h"
 #include "jansson.h"
+#include "Shared/Files.hpp"
 #define NANOVG_GL3_IMPLEMENTATION
 #include "nanovg_gl.h"
 #include "GUI/nanovg_lua.h"
@@ -35,6 +36,7 @@ Graphics::Window* g_gameWindow = nullptr;
 Application* g_application = nullptr;
 JobSheduler* g_jobSheduler = nullptr;
 Input g_input;
+Files file;
 
 // Tickable queue
 static Vector<IApplicationTickable*> g_tickables;
@@ -686,6 +688,17 @@ Graphics::Image Application::LoadImage(const String& name)
 {
 	String path = String("skins/") + m_skin + String("/textures/") + name;
 	return ImageRes::Create(path);
+}
+Vector<Graphics::Image> Application::LoadImages(const String& name)
+{
+	Vector<FileInfo> path = file.ScanFiles(String("skins/") + m_skin + String("/textures/") + name);
+	Vector<Graphics::Image> Images;
+
+	for (int i = 0 ; i < path.size() ; i++) 
+	{
+		Images.push_back(ImageRes::Create(path[i].fullPath));
+	}
+	return Images;
 }
 
 Graphics::Image Application::LoadImageExternal(const String& name)

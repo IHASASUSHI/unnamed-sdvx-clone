@@ -145,12 +145,29 @@ private:
 
 	// Particle effects
 	Material particleMaterial;
-	Texture basicParticleTexture;
-	Texture squareParticleTexture;
+	Texture VoltRParticleTexture;
+	Texture VoltLParticleTexture;
+	Texture BTParticleTexture;
+	Vector<Texture> scoreHitTexturestest[3];
+	Vector<Texture> VoltLCorner;
+	Vector<Texture> VoltLloop;
+	Vector<Texture> VoltRCorner;
+	Vector<Texture> VoltRloop;
+	Vector<Texture> Holdinital;
+	Vector<Texture> Holdloop;
 	ParticleSystem m_particleSystem;
 	Ref<ParticleEmitter> m_laserFollowEmitters[2];
+	Ref<TextureAnimatorParameterManager> m_laserCornerAnimator[2];
+	Ref<TextureAnimatorParameterManager> m_laserLoopAnimator[2];
 	Ref<ParticleEmitter> m_holdEmitters[6];
+	Ref<TextureAnimatorParameterManager> m_HoldinitalAnimator[6];
+	Ref<TextureAnimatorParameterManager> m_HoldloopAnimator[6];
+	Ref<TextureAnimatorParameterManager> m_HitRatingAnimation[3];
 	GameFlags m_flags;
+	
+	// Texture Animation
+	TextureAnimator m_TextureAnimator;
+
 	bool m_manualExit = false;
 
 	float m_shakeAmount = 3;
@@ -331,10 +348,20 @@ public:
 		loader.AddLoadable(*m_track, "Track");
 
 		// Load particle textures
-		loader.AddTexture(basicParticleTexture, "particle_flare.png");
-		loader.AddTexture(squareParticleTexture, "particle_square.png");
+		loader.AddTexture(VoltLParticleTexture, "eff_vol_l.png");
+		loader.AddTexture(VoltRParticleTexture, "eff_vol_r.png");
+		loader.AddTexture(BTParticleTexture, "particle_glow_03.png");
 		loader.AddMaterial(particleMaterial, "particle");
-
+		loader.AddTextures(Holdinital, "Hold_init");
+		loader.AddTextures(Holdloop, "Hold_loop");
+		loader.AddTextures(VoltLCorner, "L_Corner");
+		loader.AddTextures(VoltLloop, "L_Loop");
+		loader.AddTextures(VoltRCorner, "R_Corner");
+		loader.AddTextures(VoltRloop, "R_Loop");
+		for (uint32 i = 0; i < 3; i++)
+		{
+			loader.AddTextures(scoreHitTexturestest[i], Utility::Sprintf("score%d", i));
+		}
 		if(!InitHUD())
 			return false;
 
@@ -345,7 +372,7 @@ public:
 
 		// Load particle material
 		m_particleSystem = ParticleSystemRes::Create(g_gl);
-
+		m_TextureAnimator = TextureAnimatorRes::Create(g_gl);
 
 		return true;
 	}
@@ -657,7 +684,7 @@ public:
 			if(m_scoring.IsLaserHeld(i))
 			{
 				m_track->laserPositions[i] = m_scoring.laserTargetPositions[i];
-				m_track->lasersAreExtend[i] = m_scoring.lasersAreExtend[i];
+				m_track->lasersAreExtend[i] = m_scoring.lasersAreExtend[i	];
 			}
 			else
 			{
@@ -708,9 +735,27 @@ public:
 				{
 					Color hitColor = (i < 4) ? Color::White : Color::FromHSV(20, 0.7f, 1.0f);
 					float hitWidth = (i < 4) ? m_track->buttonWidth : m_track->fxbuttonWidth;
-					m_holdEmitters[i] = CreateHoldEmitter(hitColor, hitWidth);
+					//m_holdEmitters[i] = CreateHoldEmitter(hitColor, hitWidth);
 				}
-				m_holdEmitters[i]->position = m_track->TransformPoint(Vector3(m_track->GetButtonPlacement(i), 0.f, 0.f));
+				if (!m_HoldinitalAnimator[i])
+				{
+					m_HoldinitalAnimator[i] = CreateHitAnimation(Holdinital);
+					m_HoldinitalAnimator[i]->SetSize(Constant<float>(0.3f));
+					m_HoldinitalAnimator[i]->SetLifetime(Constant<float>(0.2f));
+				}
+				if (!m_HoldloopAnimator[i])
+				{
+					m_HoldloopAnimator[i] = CreateLoopAnimation(Holdloop);
+					m_HoldinitalAnimator[i]->SetSize(Constant<float>(0.3f));
+					m_HoldinitalAnimator[i]->SetLifetime(Constant<float>(0.2f));
+				}
+				//m_holdEmitters[i]->position = m_track->TransformPoint(Vector3(m_track->GetButtonPlacement(i), 0.f, 0.f));
+				m_HoldinitalAnimator[i]->position = m_track->TransformPoint(Vector3(m_track->GetButtonPlacement(i), 0.f, 0.f));
+				m_HoldloopAnimator[i]->position = m_track->TransformPoint(Vector3(m_track->GetButtonPlacement(i), 0.f, 0.f));
+				m_HoldinitalAnimator[i] = CreateHitAnimation(Holdinital);
+				m_HoldinitalAnimator[i]->SetSize(Constant<float>(0.3f));
+				m_HoldinitalAnimator[i]->SetLifetime(Constant<float>(0.2f));
+				//m_scoring->hasflag
 			}
 			else
 			{
@@ -718,8 +763,15 @@ public:
 				{
 					m_holdEmitters[i].Release();
 				}
+				if (m_HoldloopAnimator[i])
+				{
+					m_HoldloopAnimator[i].Release();
+				}
+				if (m_HoldinitalAnimator[i])
+				{
+					m_HoldinitalAnimator[i].Release();
+				}
 			}
-
 		}
 
 		// IF YOU INCLUDE nanovg.h YOU CAN DO
@@ -751,6 +803,8 @@ public:
 		}
 		// flush NVG
 		NVG_FLUSH();
+		
+		RemderAnimation(rs, deltaTime);
 
 		// Render particle effects last
 		RenderParticles(rs, deltaTime);
@@ -1180,12 +1234,16 @@ public:
 		// Render particle effects
 		m_particleSystem->Render(rs, deltaTime);
 	}
-	
+	void RemderAnimation(const RenderState& rs, float deltaTime)
+	{
+		// Render particle effects
+		m_TextureAnimator->Render(rs, deltaTime);
+	}
 	Ref<ParticleEmitter> CreateTrailEmitter(const Color& color)
 	{
 		Ref<ParticleEmitter> emitter = m_particleSystem->AddEmitter();
 		emitter->material = particleMaterial;
-		emitter->texture = basicParticleTexture;
+		emitter->texture = VoltLParticleTexture;
 		emitter->loops = 0;
 		emitter->duration = 5.0f;
 		emitter->SetSpawnRate(PPRandomRange<float>(250, 300));
@@ -1208,7 +1266,7 @@ public:
 	{
 		Ref<ParticleEmitter> emitter = m_particleSystem->AddEmitter();
 		emitter->material = particleMaterial;
-		emitter->texture = basicParticleTexture;
+		emitter->texture = BTParticleTexture;
 		emitter->loops = 0;
 		emitter->duration = 5.0f;
 		emitter->SetSpawnRate(PPRandomRange<float>(50, 100));
@@ -1231,7 +1289,7 @@ public:
 	{
 		Ref<ParticleEmitter> emitter = m_particleSystem->AddEmitter();
 		emitter->material = particleMaterial;
-		emitter->texture = basicParticleTexture;
+		emitter->texture = VoltLParticleTexture;
 		emitter->loops = 1;
 		emitter->duration = 0.2f;
 		emitter->SetSpawnRate(PPRange<float>(200, 0));
@@ -1254,7 +1312,7 @@ public:
 	{
 		Ref<ParticleEmitter> emitter = m_particleSystem->AddEmitter();
 		emitter->material = particleMaterial;
-		emitter->texture = basicParticleTexture;
+		emitter->texture = BTParticleTexture;
 		emitter->loops = 1;
 		emitter->duration = 0.15f;
 		emitter->SetSpawnRate(PPRange<float>(50, 0));
@@ -1265,12 +1323,59 @@ public:
 		emitter->SetStartDrag(PPConstant<float>(6.0f));
 		emitter->SetSpawnVelocityScale(PPConstant<float>(0.0f));
 		emitter->SetScaleOverTime(PPRange<float>(1.0f, 0.4f));
-		emitter->SetStartVelocity(PPCone(Vector3(0,0,-1), 90.0f, 1.0f, 4.0f));
+		emitter->SetStartVelocity(PPCone(Vector3(0, 0, -1), 90.0f, 1.0f, 4.0f));
 		emitter->SetStartColor(PPConstant<Color>(color));
 		emitter->position.y = 0.0f;
 		return emitter;
 	}
-
+	Ref<TextureAnimatorParameterManager> CreateHitAnimation(Vector<Texture> tex)
+	{
+		Ref<TextureAnimatorParameterManager> AnimationManager = m_TextureAnimator->AddManager();
+		AnimationManager->material = particleMaterial;
+		AnimationManager->textures = tex;
+		AnimationManager->SetLifetime(Constant<float>(0.38f));
+		AnimationManager->SetAlpha(Constant<float>(1.0f));
+		AnimationManager->SetStartColor(Constant<Color>(Color::White));
+		AnimationManager->SetSize(Constant<float>(0.2f));
+		AnimationManager->SetRotation(Constant<float>(3.14f));
+		AnimationManager->SetPosition(Constant<Vector3>({ 0.0f,0.0f,0.0f }));
+		AnimationManager->SetSpawnRate(Constant<float>(5));
+		AnimationManager->SetRotation(Constant<float>(0.0f));
+		AnimationManager->loops = 1;
+		return AnimationManager;
+	}
+	Ref<TextureAnimatorParameterManager> CreateCornerAnimation(Vector<Texture> tex)
+	{
+		Ref<TextureAnimatorParameterManager> AnimationManager = m_TextureAnimator->AddManager();
+		AnimationManager->material = particleMaterial;
+		AnimationManager->textures = tex;
+		AnimationManager->SetLifetime(Constant<float>(0.38f));
+		AnimationManager->SetAlpha(Constant<float>(1.0f));
+		AnimationManager->SetStartColor(Constant<Color>(Color::White));
+		AnimationManager->SetSize(Constant<float>(0.2f));
+		AnimationManager->SetRotation(Constant<float>(3.14f));
+		AnimationManager->SetPosition(Constant<Vector3>({ 0.0f,0.0f,0.0f }));
+		AnimationManager->SetSpawnRate(Constant<float>(5));
+		AnimationManager->SetRotation(Constant<float>(0.0f));
+		AnimationManager->loops = 0;
+		return AnimationManager;
+	}
+	Ref<TextureAnimatorParameterManager> CreateLoopAnimation(Vector<Texture> tex)
+	{
+		Ref<TextureAnimatorParameterManager> AnimationManager = m_TextureAnimator->AddManager();
+		AnimationManager->material = particleMaterial;
+		AnimationManager->textures = tex;
+		AnimationManager->SetLifetime(Constant<float>(0.38f));
+		AnimationManager->SetAlpha(Constant<float>(1.0f));
+		AnimationManager->SetStartColor(Constant<Color>(Color::White));
+		AnimationManager->SetSize(Constant<float>(0.2f));
+		AnimationManager->SetRotation(Constant<float>(3.14f));
+		AnimationManager->SetPosition(Constant<Vector3>({ 0.0f,0.0f,0.0f }));
+		AnimationManager->SetSpawnRate(Constant<float>(5));
+		AnimationManager->SetRotation(Constant<float>(0.0f));
+		AnimationManager->loops = 0;
+		return AnimationManager;
+	}
 	// Main GUI/HUD Rendering loop
 	virtual void RenderDebugHUD(float deltaTime)
 	{
@@ -1412,16 +1517,32 @@ public:
 				{
 					Logf("Lua error on calling near_hit: %s", Logger::Error, lua_tostring(m_lua, -1));
 				}
+				// Create hit effect particle
+				if (m_HitRatingAnimation[1]) {
+					if (m_HitRatingAnimation[1]->HasFinished()) {
+						m_HitRatingAnimation[1].Release();
+					}
+				}
+				m_HitRatingAnimation[1] = CreateHitAnimation(scoreHitTexturestest[1]);
+				m_HitRatingAnimation[1]->position.x = m_track->GetButtonPlacement(buttonIdx);
+				m_HitRatingAnimation[1]->position.z = 0.0f;
+				m_HitRatingAnimation[1]->position.y = 0.0f;
+				m_HitRatingAnimation[1]->position = m_track->TransformPoint(m_HitRatingAnimation[1]->position);
 			}
-
-			// Create hit effect particle
-			Color hitColor = (buttonIdx < 4) ? Color::White : Color::FromHSV(20, 0.7f, 1.0f);
-			float hitWidth = (buttonIdx < 4) ? m_track->buttonWidth : m_track->fxbuttonWidth;
-			Ref<ParticleEmitter> emitter = CreateHitEmitter(hitColor, hitWidth);
-			emitter->position.x = m_track->GetButtonPlacement(buttonIdx);
-			emitter->position.z = -0.05f;
-			emitter->position.y = 0.0f;
-			emitter->position = m_track->TransformPoint(emitter->position);
+			else
+			{
+				// Create hit effect particle
+				if (m_HitRatingAnimation[2]) {
+					if (m_HitRatingAnimation[2]->HasFinished()) {
+						m_HitRatingAnimation[2].Release();
+					}
+				}
+				m_HitRatingAnimation[2] = CreateHitAnimation(scoreHitTexturestest[2]);
+				m_HitRatingAnimation[2]->position.x = m_track->GetButtonPlacement(buttonIdx);
+				m_HitRatingAnimation[2]->position.z = 0.0f;
+				m_HitRatingAnimation[2]->position.y = 0.0f;
+				m_HitRatingAnimation[2]->position = m_track->TransformPoint(m_HitRatingAnimation[2]->position);
+			}
 		}
 
 	}
@@ -1434,6 +1555,21 @@ public:
 			m_track->AddEffect(new ButtonHitEffect(buttonIdx, c));
 		}
 		m_track->AddEffect(new ButtonHitRatingEffect(buttonIdx, ScoreHitRating::Miss));
+		// Create hit effect particle
+		Color hitColor = (buttonIdx < 4) ? Color::Black : Color::FromHSV(20, 0.7f, 1.0f);
+		float hitWidth = (buttonIdx < 4) ? m_track->buttonWidth : m_track->fxbuttonWidth;
+		if (m_HitRatingAnimation[0]) {
+			if (m_HitRatingAnimation[0]->HasFinished()) {
+				m_HitRatingAnimation[0].Release();
+			}
+		}
+		m_HitRatingAnimation[0] = CreateHitAnimation(scoreHitTexturestest[0]);
+		m_HitRatingAnimation[0]->position.x = m_track->GetButtonPlacement(buttonIdx);
+		m_HitRatingAnimation[0]->position.z = 0.0f;
+		m_HitRatingAnimation[0]->position.y = 0.0f;
+		m_HitRatingAnimation[0]->loops = 8.0f;
+		m_HitRatingAnimation[0]->SetLifetime(Constant<float>(0.0475f));
+		m_HitRatingAnimation[0]->position = m_track->TransformPoint(m_HitRatingAnimation[0]->position);
 	}
 	void OnComboChanged(uint32 newCombo)
 	{
@@ -1453,7 +1589,7 @@ public:
 		{
 			Logf("Lua error on calling update_score: %s", Logger::Error, lua_tostring(m_lua, -1));
 		}
-	}
+	};
 
 	// These functions control if FX button DSP's are muted or not
 	void OnObjectHold(Input::Button, ObjectState* object)

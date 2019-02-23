@@ -12,6 +12,7 @@
 #include "Material.hpp"
 #include "Framebuffer.hpp"
 #include "ParticleSystem.hpp"
+#include "TextureAnimator.hpp"
 #include "Window.hpp"
 #include <Shared/Thread.hpp>
 
@@ -40,6 +41,7 @@ namespace Graphics
 			ResourceManagers::DestroyResourceManager<ResourceType::Material>();
 			ResourceManagers::DestroyResourceManager<ResourceType::Framebuffer>();
 			ResourceManagers::DestroyResourceManager<ResourceType::ParticleSystem>();
+			ResourceManagers::DestroyResourceManager<ResourceType::TextureAnimator>();
 
 			if(glBindProgramPipeline)
 			{
@@ -60,6 +62,7 @@ namespace Graphics
 		ResourceManagers::CreateResourceManager<ResourceType::Material>();
 		ResourceManagers::CreateResourceManager<ResourceType::Framebuffer>();
 		ResourceManagers::CreateResourceManager<ResourceType::ParticleSystem>();
+		ResourceManagers::CreateResourceManager<ResourceType::TextureAnimator>();
 	}
 	bool OpenGL::Init(Window& window, uint32 antialiasing)
 	{

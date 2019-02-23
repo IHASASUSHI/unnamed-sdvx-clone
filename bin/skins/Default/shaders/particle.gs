@@ -36,19 +36,19 @@ void main()
 	
 	gl_Position = proj * camera * (gl_in[0].gl_Position + (-cameraRight - cameraUp) * fScale);
 	fsColor = inColor[0];
-	fsTex = vec2(0.0f, 0.0f);
-	EmitVertex();
-
-	gl_Position = proj * camera * (gl_in[0].gl_Position + (cameraRight - cameraUp) * fScale);
-	fsTex = vec2(1.0f, 0.0f);
-	EmitVertex();
-	
-	gl_Position = proj * camera * (gl_in[0].gl_Position + (-cameraRight + cameraUp) * fScale);
 	fsTex = vec2(0.0f, 1.0f);
 	EmitVertex();
 
-	gl_Position = proj * camera * (gl_in[0].gl_Position + (cameraRight + cameraUp) * fScale);
+	gl_Position = proj * camera * (gl_in[0].gl_Position + (cameraRight - cameraUp) * fScale);
 	fsTex = vec2(1.0f, 1.0f);
+	EmitVertex();
+	
+	gl_Position = proj * camera * (gl_in[0].gl_Position + (-cameraRight + cameraUp) * fScale);
+	fsTex = vec2(0.0f, 0.0f);
+	EmitVertex();
+
+	gl_Position = proj * camera * (gl_in[0].gl_Position + (cameraRight + cameraUp) * fScale);
+	fsTex = vec2(1.0f, 0.0f);
 	EmitVertex();
 
 	EndPrimitive();

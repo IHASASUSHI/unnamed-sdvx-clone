@@ -59,6 +59,7 @@ public:
 #undef LoadImage
 #endif
 	Image LoadImage(const String& name);
+	Vector<Graphics::Image> LoadImages(const String& name);
 	Graphics::Image LoadImageExternal(const String & name);
 	Texture LoadTexture(const String& name);
 	Texture LoadTexture(const String & name, const bool& external);

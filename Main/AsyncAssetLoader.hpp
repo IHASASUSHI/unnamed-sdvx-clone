@@ -14,6 +14,8 @@ public:
 	/// NOTE: the caller is responsible for keeping the passed in variable valid the this object is destroyed or finished with the loading
 	// Add a texture to be loaded
 	void AddTexture(Texture& out, const String& path);
+	// Add textures to be loaded
+	void AddTextures(Vector<Texture>& out, const String& path);
 	// Add a mesh to be loaded
 	void AddMesh(Mesh& out, const String& path);
 	// Add a mesh to be loaded

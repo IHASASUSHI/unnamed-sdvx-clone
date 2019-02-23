@@ -20,6 +20,7 @@ template<> struct ResourceManagerTypes<ResourceType::_EnumMember>\
 		Mesh,
 		Shader,
 		Material,
+		TextureAnimator,
 		ParticleSystem,
 		_Length
 	};
