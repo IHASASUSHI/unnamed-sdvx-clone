@@ -132,6 +132,8 @@ public:
 	// Called when a laser slam was hit
 	// (Laser slam segment)
 	Delegate<LaserObjectState*> OnLaserSlamHit;
+	// (Laser change direction)
+	Delegate<LaserObjectState*> OnLaserChangeDir;
 	// Called when the combo counter changed
 	// (New Combo)
 	Delegate<uint32> OnComboChanged;

@@ -151,14 +151,17 @@ private:
 	Vector<Texture> scoreHitTexturestest[3];
 	Vector<Texture> VoltLCorner;
 	Vector<Texture> VoltLloop;
+	Vector<Texture> VoltLloop2;
 	Vector<Texture> VoltRCorner;
 	Vector<Texture> VoltRloop;
+	Vector<Texture> VoltRloop2;
 	Vector<Texture> Holdinital;
 	Vector<Texture> Holdloop;
 	ParticleSystem m_particleSystem;
 	Ref<ParticleEmitter> m_laserFollowEmitters[2];
 	Ref<TextureAnimatorParameterManager> m_laserCornerAnimator[2];
 	Ref<TextureAnimatorParameterManager> m_laserLoopAnimator[2];
+	Ref<TextureAnimatorParameterManager> m_laserLoopAnimator2[2];
 	Ref<ParticleEmitter> m_holdEmitters[6];
 	Ref<TextureAnimatorParameterManager> m_HoldinitalAnimator[6];
 	Ref<TextureAnimatorParameterManager> m_HoldloopAnimator[6];
@@ -356,8 +359,10 @@ public:
 		loader.AddTextures(Holdloop, "Hold_loop");
 		loader.AddTextures(VoltLCorner, "L_Corner");
 		loader.AddTextures(VoltLloop, "L_Loop");
+		loader.AddTextures(VoltLloop2, "L_Loop2");
 		loader.AddTextures(VoltRCorner, "R_Corner");
 		loader.AddTextures(VoltRloop, "R_Loop");
+		loader.AddTextures(VoltRloop2, "R_Loop2");
 		for (uint32 i = 0; i < 3; i++)
 		{
 			loader.AddTextures(scoreHitTexturestest[i], Utility::Sprintf("score%d", i));
@@ -708,21 +713,51 @@ public:
 			if(m_scoring.IsLaserHeld(i))
 			{
 				if(!m_laserFollowEmitters[i])
-					m_laserFollowEmitters[i] = CreateTrailEmitter(m_track->laserColors[i]);
-
+					if (i == 0)
+						m_laserFollowEmitters[i] = CreateTrailEmitter(m_track->laserColors[i],VoltLParticleTexture);
+					else
+						m_laserFollowEmitters[i] = CreateTrailEmitter(m_track->laserColors[i], VoltRParticleTexture);
+				if (!m_laserLoopAnimator[i]) {
+					if (i == 0) {
+						m_laserLoopAnimator[i] = CreateLoopAnimation(VoltLloop);
+						m_laserLoopAnimator[i]->SetSize(Constant<float>(0.15f));
+						m_laserLoopAnimator[i]->SetLifetime(Constant<float>(0.2f));
+					}
+					else {
+						m_laserLoopAnimator[i] = CreateLoopAnimation(VoltRloop);
+						m_laserLoopAnimator[i]->SetSize(Constant<float>(0.15f));
+						m_laserLoopAnimator[i]->SetLifetime(Constant<float>(0.2f));
+					}
+				}
+				if (!m_laserLoopAnimator2[i]) {
+					if (i == 0) {
+						m_laserLoopAnimator2[i] = CreateLoopAnimation(VoltLloop2);
+						m_laserLoopAnimator2[i]->SetSize(Constant<float>(0.15f));
+						m_laserLoopAnimator2[i]->SetLifetime(Constant<float>(0.2f));
+					}
+					else {
+						m_laserLoopAnimator2[i] = CreateLoopAnimation(VoltRloop2);
+						m_laserLoopAnimator2[i]->SetSize(Constant<float>(0.15f));
+						m_laserLoopAnimator2[i]->SetLifetime(Constant<float>(0.2f));
+					}
+				}
 				// Set particle position to follow laser
 				float followPos = m_scoring.laserTargetPositions[i];
 				if (m_scoring.lasersAreExtend[i])
 					followPos = followPos * 2.0f - 0.5f; 
 
 				m_laserFollowEmitters[i]->position = m_track->TransformPoint(Vector3(m_track->trackWidth * followPos - m_track->trackWidth * 0.5f, 0.f, 0.f));
+				m_laserLoopAnimator[i]->position = m_track->TransformPoint(Vector3((followPos) - (m_track->trackWidth * 0.5f), 0.f, 0.f));
+				m_laserLoopAnimator2[i]->position = m_track->TransformPoint(Vector3((followPos) - (m_track->trackWidth * 0.5f), 0.f, -0.15f));
 			}
 			else
 			{
 				if(m_laserFollowEmitters[i])
-				{
 					m_laserFollowEmitters[i].Release();
-				}
+				if (m_laserLoopAnimator[i])
+					m_laserLoopAnimator[i].Release();
+				if (m_laserLoopAnimator2[i])
+					m_laserLoopAnimator2[i].Release();
 			}
 		}
 
@@ -731,12 +766,6 @@ public:
 		{
 			if(m_scoring.IsObjectHeld(i))
 			{
-				if(!m_holdEmitters[i])
-				{
-					Color hitColor = (i < 4) ? Color::White : Color::FromHSV(20, 0.7f, 1.0f);
-					float hitWidth = (i < 4) ? m_track->buttonWidth : m_track->fxbuttonWidth;
-					//m_holdEmitters[i] = CreateHoldEmitter(hitColor, hitWidth);
-				}
 				if (!m_HoldinitalAnimator[i])
 				{
 					m_HoldinitalAnimator[i] = CreateHitAnimation(Holdinital);
@@ -746,23 +775,17 @@ public:
 				if (!m_HoldloopAnimator[i])
 				{
 					m_HoldloopAnimator[i] = CreateLoopAnimation(Holdloop);
-					m_HoldinitalAnimator[i]->SetSize(Constant<float>(0.3f));
-					m_HoldinitalAnimator[i]->SetLifetime(Constant<float>(0.2f));
+					m_HoldloopAnimator[i]->SetSize(Constant<float>(0.33f));
+					m_HoldloopAnimator[i]->SetLifetime(Constant<float>(0.2f));
 				}
-				//m_holdEmitters[i]->position = m_track->TransformPoint(Vector3(m_track->GetButtonPlacement(i), 0.f, 0.f));
 				m_HoldinitalAnimator[i]->position = m_track->TransformPoint(Vector3(m_track->GetButtonPlacement(i), 0.f, 0.f));
 				m_HoldloopAnimator[i]->position = m_track->TransformPoint(Vector3(m_track->GetButtonPlacement(i), 0.f, 0.f));
 				m_HoldinitalAnimator[i] = CreateHitAnimation(Holdinital);
 				m_HoldinitalAnimator[i]->SetSize(Constant<float>(0.3f));
 				m_HoldinitalAnimator[i]->SetLifetime(Constant<float>(0.2f));
-				//m_scoring->hasflag
 			}
 			else
 			{
-				if(m_holdEmitters[i])
-				{
-					m_holdEmitters[i].Release();
-				}
 				if (m_HoldloopAnimator[i])
 				{
 					m_HoldloopAnimator[i].Release();
@@ -968,6 +991,7 @@ public:
 		// Register input bindings
 		m_scoring.OnButtonMiss.Add(this, &Game_Impl::OnButtonMiss);
 		m_scoring.OnLaserSlamHit.Add(this, &Game_Impl::OnLaserSlamHit);
+		m_scoring.OnLaserChangeDir.Add(this, &Game_Impl::OnLaserChangeDir);
 		m_scoring.OnButtonHit.Add(this, &Game_Impl::OnButtonHit);
 		m_scoring.OnComboChanged.Add(this, &Game_Impl::OnComboChanged);
 		m_scoring.OnObjectHold.Add(this, &Game_Impl::OnObjectHold);
@@ -1239,23 +1263,22 @@ public:
 		// Render particle effects
 		m_TextureAnimator->Render(rs, deltaTime);
 	}
-	Ref<ParticleEmitter> CreateTrailEmitter(const Color& color)
+	Ref<ParticleEmitter> CreateTrailEmitter(const Color& color, Texture tex)
 	{
 		Ref<ParticleEmitter> emitter = m_particleSystem->AddEmitter();
 		emitter->material = particleMaterial;
-		emitter->texture = VoltLParticleTexture;
+		emitter->texture = tex;
 		emitter->loops = 0;
 		emitter->duration = 5.0f;
-		emitter->SetSpawnRate(PPRandomRange<float>(250, 300));
+		emitter->SetSpawnRate(PPConstant<float>(25));
 		emitter->SetStartPosition(PPBox({ 0.5f, 0.0f, 0.0f }));
-		emitter->SetStartSize(PPRandomRange<float>(0.25f, 0.4f));
+		emitter->SetStartSize(PPRandomRange<float>(0.01f, 0.05f));
 		emitter->SetScaleOverTime(PPRange<float>(2.0f, 1.0f));
-		emitter->SetFadeOverTime(PPRangeFadeIn<float>(1.0f, 0.0f, 0.4f));
+		emitter->SetFadeOverTime(PPConstant<float>(1.0f));
 		emitter->SetLifetime(PPRandomRange<float>(0.17f, 0.2f));
 		emitter->SetStartDrag(PPConstant<float>(0.0f));
-		emitter->SetStartVelocity(PPConstant<Vector3>({ 0, -4.0f, 2.0f }));
+		emitter->SetStartVelocity(PPConstant<Vector3>({ 0, -4.0f, 3.0f }));
 		emitter->SetSpawnVelocityScale(PPRandomRange<float>(0.9f, 2));
-		emitter->SetStartColor(PPConstant<Color>((Color)(color * 0.7f)));
 		emitter->SetGravity(PPConstant<Vector3>(Vector3(0.0f, 0.0f, -9.81f)));
 		emitter->position.y = 0.0f;
 		emitter->position = m_track->TransformPoint(emitter->position);
@@ -1487,6 +1510,28 @@ public:
 		ex->position = Vector3(laserPos, 0.0f, -0.05f);
 		ex->position = m_track->TransformPoint(ex->position);
 	}
+	void OnLaserChangeDir(LaserObjectState* object)
+	{
+		if (m_laserCornerAnimator[object->index])
+			m_laserCornerAnimator[object->index].Release();
+		if (!m_laserCornerAnimator[object->index])
+			if (object->index == 0) {
+				m_laserCornerAnimator[0] = CreateHitAnimation(VoltLCorner);
+				m_laserCornerAnimator[0]->SetSize(Constant<float>(0.35f));
+				m_laserCornerAnimator[0]->SetLifetime(Constant<float>(0.2f));
+			}
+			else {
+				m_laserCornerAnimator[1] = CreateHitAnimation(VoltRCorner);
+				m_laserCornerAnimator[1]->SetSize(Constant<float>(0.35f));
+				m_laserCornerAnimator[1]->SetLifetime(Constant<float>(0.2f));
+			}
+
+		float followPos = m_scoring.laserTargetPositions[object->index];
+		if (m_scoring.lasersAreExtend[object->index])
+			followPos = followPos * 2.0f - 0.5f;
+		m_laserCornerAnimator[object->index]->position = m_track->TransformPoint(Vector3(m_track->trackWidth * followPos - m_track->trackWidth * 0.5f, 0.f, 0.f));
+	}
+
 	void OnButtonHit(Input::Button button, ScoreHitRating rating, ObjectState* hitObject, bool late)
 	{
 		ButtonObjectState* st = (ButtonObjectState*)hitObject;
@@ -1569,6 +1614,7 @@ public:
 		m_HitRatingAnimation[0]->position.y = 0.0f;
 		m_HitRatingAnimation[0]->loops = 8.0f;
 		m_HitRatingAnimation[0]->SetLifetime(Constant<float>(0.0475f));
+		m_HitRatingAnimation[0]->SetSize(Constant<float>(0.125f));
 		m_HitRatingAnimation[0]->position = m_track->TransformPoint(m_HitRatingAnimation[0]->position);
 	}
 	void OnComboChanged(uint32 newCombo)
@@ -1612,6 +1658,17 @@ public:
 			{
 				m_audioPlayback.SetEffectEnabled(hold->index - 4, false);
 			}
+			if (m_HoldinitalAnimator[hold->index])
+			{
+				m_HoldinitalAnimator[hold->index].Release();
+			}
+			if (!m_HoldinitalAnimator[hold->index])
+			{
+				m_HoldinitalAnimator[hold->index] = CreateHitAnimation(Holdinital);
+				m_HoldinitalAnimator[hold->index]->SetSize(Constant<float>(0.3f));
+				m_HoldinitalAnimator[hold->index]->SetLifetime(Constant<float>(0.2f));
+			}
+			m_HoldinitalAnimator[hold->index]->position = m_track->TransformPoint(Vector3(m_track->GetButtonPlacement(hold->index), 0.f, 0.f));
 		}
 	}
 

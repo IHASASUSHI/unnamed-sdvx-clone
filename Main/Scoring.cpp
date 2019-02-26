@@ -958,6 +958,7 @@ void Scoring::m_UpdateLasers(float deltaTime)
 				{
 					//Direction change
 					//m_autoLaserTime[(*it)->index] = -1;
+					OnLaserChangeDir.Call(m_currentLaserSegments[(*it)->index]);
 				}
 
 				it = m_laserSegmentQueue.erase(it);

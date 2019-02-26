@@ -74,7 +74,7 @@ void ButtonHitRatingEffect::Draw(class RenderQueue& rq)
 		on = (uint32)floorf(GetRate() * 6.0f) % 2;
 	else if (rating == ScoreHitRating::Perfect)
 		iScale = cos(GetRate() * 12.0f) * 0.5f + 1.0f;
-
+	/*
 	if (on == 1)
 	{
 		Texture hitTexture = track->scoreHitTextures[(size_t)rating];
@@ -94,6 +94,7 @@ void ButtonHitRatingEffect::Draw(class RenderQueue& rq)
 
 		track->DrawSprite(rq, Vector3(x, y + hitEffectSize.y * 0.5f, -0.02f), hitEffectSize, hitTexture, c, 0.0f);
 	}
+	*/
 }
 
 TimedHitEffect::TimedHitEffect(bool late) : TimedEffect(0.75f), late(late)

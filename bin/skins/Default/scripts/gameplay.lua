@@ -402,6 +402,7 @@ render_crit_overlay = function(deltaTime)
 end
 
 render = function(deltaTime)
+    gfx.ResetTransform()
     if introTimer > 0 then
         gfx.BeginPath()
         gfx.Rect(0,0,resx,resy)
